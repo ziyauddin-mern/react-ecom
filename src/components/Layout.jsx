@@ -57,7 +57,6 @@ function LayoutEl({ children }) {
   const openLink = (e) => {
     navigate(e.key);
   };
-
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center sticky top-0 left-0 z-50">

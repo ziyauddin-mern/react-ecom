@@ -6,6 +6,8 @@ import ContactUs from "./components/ContactUs";
 import Cart from "./components/Carts";
 import Profile from "./components/Profile";
 
+import AdminProducts from "./components/Admin/Products";
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -16,6 +18,9 @@ const App = () => {
           <Route path="/contact-us" element={<ContactUs />} />
           <Route path="/carts" element={<Cart />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/admin">
+            <Route path="products" element={<AdminProducts />} />
+          </Route>
         </Routes>
       </Layout>
     </BrowserRouter>
