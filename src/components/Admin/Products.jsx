@@ -1,35 +1,155 @@
 import { useState } from "react";
-import { PlusOutlined } from "@ant-design/icons";
-import { Button, Input, Modal, Form, message } from "antd";
+import {
+  DeleteFilled,
+  DeleteOutlined,
+  EditFilled,
+  EditOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from "@ant-design/icons";
+import {
+  Button,
+  Input,
+  Modal,
+  Form,
+  message,
+  Table,
+  Skeleton,
+  Result,
+  Upload,
+} from "antd";
+import useSWR, { mutate } from "swr";
 import axios from "axios";
+import moment from "moment";
 axios.defaults.baseURL = "http://localhost:8080";
 
+const fetcher = async (url) => {
+  try {
+    const { data } = await axios.get(url);
+    return data;
+  } catch (err) {
+    throw new Error(err);
+  }
+};
+
 const Products = () => {
+  const [selectedProductImage, setSelectedProductImage] =
+    useState("/images/pr.jpg");
   const [open, setOpen] = useState(false);
   const [productForm] = Form.useForm();
+
+  const { data, error, isLoading } = useSWR("/product", fetcher);
 
   const createProduct = async (values) => {
     try {
       const { data } = await axios.post("/product", values);
       productForm.resetFields();
       setOpen(false);
+      mutate("/product");
     } catch (err) {
       message.error(err.message);
     }
   };
 
+  const deleteProduct = async (id) => {
+    try {
+      await axios.delete(`/product/${id}`);
+      mutate("/product");
+    } catch (err) {
+      message.error(err.message);
+    }
+  };
+
+  const uploadThumbnail = ({ file }) => {
+    const url = URL.createObjectURL(file);
+    setSelectedProductImage(url);
+  };
+
+  const columns = [
+    {
+      title: "Title",
+      key: "title",
+      render: (_, item) => (
+        <div className="flex gap-4">
+          <Upload accept="image/*" customRequest={uploadThumbnail}>
+            <img src={selectedProductImage} width={60} className="rounded" />
+          </Upload>
+          <div className="flex flex-col">
+            <label className="font-medium capitalize">{item.title}</label>
+            <small className="font-medium uppercase text-gray-500">
+              {item.brand}
+            </small>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Price",
+      key: "price",
+      dataIndex: "price",
+    },
+    {
+      title: "Discount",
+      key: "discount",
+      render: (_, item) => <label>{item.discount}%</label>,
+    },
+    {
+      title: "Date",
+      key: "createdAt",
+      render: (_, item) => (
+        <label>
+          {moment(item.createdAt).format("DD MMM YYYY, hh:mm:ss A")}
+        </label>
+      ),
+    },
+    {
+      key: "action",
+      render: (_, item) => (
+        <div className="space-x-4">
+          <Button
+            shape="circle"
+            icon={<EditFilled />}
+            className="border-green-500 text-green-500"
+          />
+
+          <Button
+            shape="circle"
+            icon={<DeleteFilled />}
+            className="border-rose-500 text-rose-500"
+            onClick={() => deleteProduct(item._id)}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  if (isLoading) return <Skeleton active />;
+
+  if (error)
+    return <Result status={500} title={500} subTitle={error.message} />;
+
   return (
     <div>
-      <div className="w-10/12 mx-auto my-12">
-        <Button
-          icon={<PlusOutlined />}
-          size="large"
-          type="primary"
-          className="bg-violet-600"
-          onClick={() => setOpen(true)}
-        >
-          New Product
-        </Button>
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <Input
+            placeholder="Search this product"
+            prefix={<SearchOutlined />}
+            size="large"
+            className="w-6/12"
+          />
+          <Button
+            icon={<PlusOutlined />}
+            size="large"
+            type="primary"
+            className="bg-violet-600"
+            onClick={() => setOpen(true)}
+          >
+            New Product
+          </Button>
+        </div>
+
+        <Table columns={columns} dataSource={data} rowKey="_id" />
       </div>
 
       <Modal

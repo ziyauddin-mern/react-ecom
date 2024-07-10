@@ -8,7 +8,7 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import { Layout, Menu } from "antd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const { Header, Content } = Layout;
 
@@ -54,9 +54,21 @@ const items = [
 
 function LayoutEl({ children }) {
   const navigate = useNavigate();
+  const location = useLocation();
+
   const openLink = (e) => {
     navigate(e.key);
   };
+
+  const blacklist = ["/admin"];
+
+  if (blacklist.some((item) => location.pathname.startsWith(item)))
+    return (
+      <>
+        <div>{children}</div>
+      </>
+    );
+
   return (
     <Layout className="min-h-screen">
       <Header className="flex items-center sticky top-0 left-0 z-50">
